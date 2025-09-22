@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Contributions Tracker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col items-center p-6">
+
+<h1 class="text-3xl font-bold mb-6 text-gray-800">Wedding Contributions Tracker</h1>
+
+<div class="w-full max-w-xl mb-6">
+  <input type="text" id="search" placeholder="Search by guest name or ticket code"
+         class="w-full p-3 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+</div>
+
+<div class="w-full max-w-5xl overflow-x-auto mb-4">
+  <table class="min-w-full bg-white shadow rounded-lg">
+    <thead class="bg-indigo-600 text-white cursor-pointer">
+      <tr>
+        <th class="py-3 px-4 text-left">Guest Name</th>
+        <th class="py-3 px-4 text-left">Pledge</th>
+        <th class="py-3 px-4 text-left">Received</th>
+        <th class="py-3 px-4 text-left">Remaining Balance</th>
+        <th class="py-3 px-4 text-left">Wedding Ticket Code</th>
+      </tr>
+    </thead>
+    <tbody id="results" class="divide-y divide-gray-200"></tbody>
+  </table>
+</div>
+
+<div class="w-full max-w-5xl text-right mb-6">
+  <span class="font-bold text-gray-700">Total Received: </span>
+  <span id="totalReceived" class="text-indigo-600 font-bold">0</span>
+  <br>
+  <span class="font-bold text-gray-700">Total Remaining Balance: </span>
+  <span id="totalRemaining" class="text-red-600 font-bold">0</span>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tabletop.js/1.5.1/tabletop.min.js"></script>
+<script>
+const publicSheetUrl = 'YOUR_GOOGLE_SHEET_URL_HERE'; // Replace with published Google Sheet URL
+let contributions = [];
+
+// Helper: generate unique ticket code
+function generateTicketCode(length = 8) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for(let i=0;i<length;i++) code += chars.charAt(Math.floor(Math.random()*chars.length));
+  return code;
+}
+
+// Load data from Google Sheet
+Tabletop.init({
+  key: publicSheetUrl,
+  simpleSheet: true,
+  callback: function(data, tabletop) {
+    contributions = data.map(r => ({
+      guest: r['Guest Name'] || '',
+      pledge: parseFloat(r['Pledge']) || 0,
+      received: parseFloat(r['Received']) || 0,
+      ticket: r['Wedding Ticket Code'] || generateTicketCode()
+    }));
+    renderTable(contributions);
+  }
+});
+
+// Search filter
+document.getElementById('search').addEventListener('input', function() {
+  const query = this.value.toLowerCase();
+  const filtered = contributions.filter(r =>
+    r.guest.toLowerCase().includes(query) || r.ticket.toLowerCase().includes(query)
+  );
+  renderTable(filtered);
+});
+
+// Render table
+function renderTable(data) {
+  const tbody = document.getElementById('results');
+  if(data.length===0){
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">No results found</td></tr>`;
+    document.getElementById('totalReceived').innerText = '0';
+    document.getElementById('totalRemaining').innerText = '0';
+    return;
+  }
+  
+  tbody.innerHTML = data.map(r => {
+    const remaining = (r.pledge - r.received).toFixed(2);
+    return `
+      <tr class="hover:bg-gray-50">
+        <td class="py-2 px-4">${r.guest}</td>
+        <td class="py-2 px-4">${r.pledge.toFixed(2)}</td>
+        <td class="py-2 px-4">${r.received.toFixed(2)}</td>
+        <td class="py-2 px-4">${remaining}</td>
+        <td class="py-2 px-4">${r.ticket}</td>
+      </tr>
+    `;
+  }).join('');
+
+  // Update totals
+  const totalReceived = data.reduce((sum,r)=>sum+r.received,0).toFixed(2);
+  const totalRemaining = data.reduce((sum,r)=>sum+(r.pledge - r.received),0).toFixed(2);
+  document.getElementById('totalReceived').innerText = totalReceived;
+  document.getElementById('totalRemaining').innerText = totalRemaining;
+}
+</script>
+
+</body>
+</html>
