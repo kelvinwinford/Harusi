@@ -2,19 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Wedding Contributions Tracker</title>
+  <title>Harusi ya Belton 2025</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen p-6">
-  <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-6">
-    <h1 class="text-2xl font-bold text-center mb-6">Wedding Contributions Tracker</h1>
+  <div class="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+    <h1 class="text-3xl font-bold text-center mb-6">Michango na wageni waalikwa</h1>
 
     <!-- Search box -->
     <input id="searchInput" 
            type="text" 
            placeholder="Search by guest name..." 
-           class="w-full border rounded-lg px-4 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+           class="w-full border rounded-lg px-4 py-2 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+    <!-- Totals cards -->
+    <div id="totals" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div class="bg-blue-50 p-4 rounded-xl shadow text-center">
+        <h2 class="text-lg font-semibold">Total Pledge</h2>
+        <p id="totalPledge" class="text-2xl font-bold text-blue-700">0</p>
+      </div>
+      <div class="bg-green-50 p-4 rounded-xl shadow text-center">
+        <h2 class="text-lg font-semibold">Total Received</h2>
+        <p id="totalReceived" class="text-2xl font-bold text-green-700">0</p>
+      </div>
+      <div class="bg-red-50 p-4 rounded-xl shadow text-center">
+        <h2 class="text-lg font-semibold">Remaining Balance</h2>
+        <p id="totalRemaining" class="text-2xl font-bold text-red-700">0</p>
+      </div>
+    </div>
 
     <!-- Table -->
     <div class="overflow-x-auto">
@@ -38,7 +54,7 @@
   <script>
     // 🔑 Replace this with your Google Sheet ID
     const sheetId = "1LtPk9AgV-HO9Y-VRIFs4wk8xqCJrliNbY-quoqnxO7Y";  
-    const sheetName = "michango"; // tab name (case sensitive!)
+    const sheetName = "michango"; // tab name
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
 
     let allData = [];
@@ -50,6 +66,7 @@
       complete: function(results) {
         allData = results.data.filter(row => row["Guest Name"]); // remove empty rows
         renderTable(allData);
+        updateTotals(allData);
       }
     });
 
@@ -58,17 +75,37 @@
       let table = document.getElementById("guestTable");
       table.innerHTML = "";
       data.forEach(row => {
+        let pledge = parseFloat(row["Pledge"] || 0);
+        let received = parseFloat(row["Received"] || 0);
+        let remaining = pledge - received;
+
         let tr = document.createElement("tr");
         tr.className = "hover:bg-gray-50";
         tr.innerHTML = `
           <td class="px-4 py-2">${row["Guest Name"] || ""}</td>
-          <td class="px-4 py-2">${row["Pledge"] || ""}</td>
-          <td class="px-4 py-2">${row["Received"] || ""}</td>
-          <td class="px-4 py-2">${row["Remaining Balance"] || ""}</td>
+          <td class="px-4 py-2">${pledge.toLocaleString()}</td>
+          <td class="px-4 py-2">${received.toLocaleString()}</td>
+          <td class="px-4 py-2">${remaining.toLocaleString()}</td>
           <td class="px-4 py-2 font-mono text-sm text-blue-600">${row["Wedding Ticket Code"] || ""}</td>
         `;
         table.appendChild(tr);
       });
+    }
+
+    // Update totals
+    function updateTotals(data) {
+      let totalPledge = 0, totalReceived = 0;
+      data.forEach(row => {
+        let pledge = parseFloat(row["Pledge"] || 0);
+        let received = parseFloat(row["Received"] || 0);
+        totalPledge += pledge;
+        totalReceived += received;
+      });
+      let totalRemaining = totalPledge - totalReceived;
+
+      document.getElementById("totalPledge").textContent = totalPledge.toLocaleString();
+      document.getElementById("totalReceived").textContent = totalReceived.toLocaleString();
+      document.getElementById("totalRemaining").textContent = totalRemaining.toLocaleString();
     }
 
     // Search filter
@@ -78,6 +115,7 @@
         row["Guest Name"] && row["Guest Name"].toLowerCase().includes(query)
       );
       renderTable(filtered);
+      updateTotals(filtered);
     });
   </script>
 </body>
