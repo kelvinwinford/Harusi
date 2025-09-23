@@ -92,9 +92,9 @@
       let table = document.getElementById("guestTable");
       table.innerHTML = "";
       data.forEach(row => {
-        let parseFloat((row["Pledge"] || "0").replace(/,/g, ""))
+        let pledge parseFloat((row["Pledge"] || "0").replace(/,/g, ""))
 ;
-        let parseFloat((row["Received"] || "0").replace(/,/g, ""))
+        let received parseFloat((row["Received"] || "0").replace(/,/g, ""))
 ;
         let remaining = pledge - received;
 
