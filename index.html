@@ -83,6 +83,10 @@
       }
     });
 
+    function cleanNumber(value) {
+      return parseFloat((value || "0").replace(/,/g, ""));
+    }
+
     function render(data) {
       renderTable(data);
       renderCards(data);
@@ -92,10 +96,8 @@
       let table = document.getElementById("guestTable");
       table.innerHTML = "";
       data.forEach(row => {
-        let pledge parseFloat((row["Pledge"] || "0").replace(/,/g, ""))
-;
-        let received parseFloat((row["Received"] || "0").replace(/,/g, ""))
-;
+        let pledge = cleanNumber(row["Pledge"]);
+        let received = cleanNumber(row["Received"]);
         let remaining = pledge - received;
 
         let tr = document.createElement("tr");
@@ -115,8 +117,8 @@
       let cards = document.getElementById("guestCards");
       cards.innerHTML = "";
       data.forEach(row => {
-        let pledge = parseFloat(row["Pledge"] || 0);
-        let received = parseFloat(row["Received"] || 0);
+        let pledge = cleanNumber(row["Pledge"]);
+        let received = cleanNumber(row["Received"]);
         let remaining = pledge - received;
 
         let div = document.createElement("div");
@@ -135,8 +137,8 @@
     function updateTotals(data) {
       let totalPledge = 0, totalReceived = 0;
       data.forEach(row => {
-        let pledge = parseFloat(row["Pledge"] || 0);
-        let received = parseFloat(row["Received"] || 0);
+        let pledge = cleanNumber(row["Pledge"]);
+        let received = cleanNumber(row["Received"]);
         totalPledge += pledge;
         totalReceived += received;
       });
